@@ -1,0 +1,104 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "itappuser"
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "defaultValue": "Itapp123456789"
+    },
+    "ubuntuOSVersion": {
+      "type": "string",
+      "defaultValue": "16.04-LTS"
+    },
+    "networkName": {
+      "type": "string",
+      "defaultValue": "sriVNetForVolAttach"
+    },
+    "subnetName": {
+      "type": "string",
+      "defaultValue": "sriSubnetForVolAttach"
+    }
+  },
+  "variables": {
+
+    "nicName": "ARMTemplate_MyNIC007",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('networkName'))]",
+    "subnetRef": "[concat(variables('vnetID'),'/subnets/',parameters('subnetName'))]",
+    
+    "vmName": "ARMTemplateMyVM007",
+    "vmSize": "Standard_A1",
+    "imagePublisher": "Canonical",
+    "imageOffer": "UbuntuServer"
+  },
+  "resources": [
+    {
+      "apiVersion": "2016-09-01",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": { "id": "[variables('subnetRef')]" }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2017-03-30",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('vmName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[parameters('ubuntuOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": { 
+            "createOption": "FromImage"
+          },
+          "dataDisks": [ {
+            "diskSizeGB": 500,
+            "lun": 0,
+            "createOption": "Empty"
+          } ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "VM Name": {
+      "type": "string",
+      "value": "[variables('vmName')]"
+    }
+  }
+}

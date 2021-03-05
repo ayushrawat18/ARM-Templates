@@ -1,0 +1,78 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "NetworkName": {
+    	"type": "string",
+    	"metadata": { "description": "name of the network" }
+    },
+    "NetworkAddress": {
+    	"type": "string",
+    	"metadata": { "description": "address of the network" }
+    },
+    "SubnetName001": {
+    	"type": "string",
+    	"metadata": { "description": "name of the subnet" }
+    },
+    "SubnetAddress001": {
+    	"type": "string",
+    	"metadata": { "description": "address of the subnet" }
+    },
+    "SubnetName002": {
+    	"type": "string",
+    	"metadata": { "description": "name of the subnet" }
+    },
+    "SubnetAddress002": {
+    	"type": "string",
+    	"metadata": { "description": "address of the subnet" }
+    }
+  },
+  "variables": {
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('NetworkName'))]",
+    "subnet001Ref": "[concat(variables('vnetID'),'/subnets/',parameters('SubnetName001'))]",
+    "subnet002Ref": "[concat(variables('vnetID'),'/subnets/',parameters('SubnetName002'))]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2016-09-01",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[parameters('NetworkName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('NetworkAddress')]"
+          ]
+        },
+        "subnets": [
+			{
+            	"name": "[parameters('SubnetName001')]",
+            	"properties": { 
+            		"addressPrefix": "[parameters('SubnetAddress001')]"
+				}
+          	},
+          	{
+            	"name": "[parameters('SubnetName002')]",
+            	"properties": { 
+            		"addressPrefix": "[parameters('SubnetAddress002')]"
+				}
+          	}
+        ]
+      }
+    }
+  ],
+  "outputs": {
+    "Network ID": {
+      "type": "string",
+      "value": "[variables('vnetID')]"
+    },
+    "Subnet001 ID": {
+      "type": "string",
+      "value": "[variables('subnet001Ref')]"
+    },
+    "Subnet002 ID": {
+      "type": "string",
+      "value": "[variables('subnet002Ref')]"
+    }
+  }
+}

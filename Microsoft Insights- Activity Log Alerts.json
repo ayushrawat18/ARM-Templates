@@ -1,0 +1,113 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "activityLogAlertName": {
+            "type": "String",
+            "defaultValue": "itomlondon1",
+            "metadata": {
+                "description": "Unique name (within the Resource Group) for the Activity log alert."
+            }
+        },
+        "activityLogAlertEnabled": {
+            "defaultValue": true,
+            "type": "Bool",
+            "metadata": {
+                "description": "Indicates whether or not the alert is enabled."
+            }
+        },
+        "operationNameCondition": {
+            "type": "Array",
+            "defaultValue": [{"field":"operationName","equals":"Microsoft.Compute/virtualMachines/deallocate/action"},{"field":"operationName","equals":"Microsoft.Compute/availabilitySets/write"},{"field":"operationName","equals":"Microsoft.Network/loadBalancers/write"},{"field":"operationName","equals":"Microsoft.Network/publicIPAddresses/delete"},{"field":"operationName","equals":"Microsoft.Storage/storageAccounts/write"},{"field":"operationName","equals":"Microsoft.Network/virtualNetworks/delete"},{"field":"operationName","equals":"Microsoft.Sql/servers/databases/delete"},{"field":"operationName","equals":"Microsoft.Network/networkInterfaces/delete"},{"field":"operationName","equals":"Microsoft.Compute/virtualmachines/write"},{"field":"operationName","equals":"Microsoft.Network/loadBalancers/delete"},{"field":"operationName","equals":"Microsoft.Storage/storageAccounts/delete"},{"field":"operationName","equals":"Microsoft.Compute/availabilitySets/delete"},{"field":"operationName","equals":"Microsoft.Compute/virtualMachines/start/action"},{"field":"operationName","equals":"Microsoft.Compute/virtualMachines/restart/action"},{"field":"operationName","equals":"Microsoft.Sql/servers/databases/write"},{"field":"operationName","equals":"Microsoft.Compute/virtualMachines/delete"},{"field":"operationName","equals":"Microsoft.Network/networkInterfaces/write"},{"field":"operationName","equals":"Microsoft.Compute/virtualMachines/stop/action"},{"field":"operationName","equals":"Microsoft.Network/publicIPAddresses/write"},{"field":"operationName","equals":"Microsoft.Network/virtualNetworks/write"},{"field":"operationName","equals":"Microsoft.Sql/servers/delete"},{"field":"operationName","equals":"Microsoft.Sql/servers/write"}],
+            "metadata": {
+                "description": "condition for Operation Name."
+            }
+        },
+        "actionGroupName": {
+            "type": "String",
+            "defaultValue": "itomlondon1",
+            "metadata": {
+                "description": "Unique name (within the Resource Group) for the Action group."
+            }
+        },
+        "actionGroupShortName": {
+            "type": "String",
+            "defaultValue": "Azure Alert",
+            "metadata": {
+                "description": "Short name (maximum 12 characters) for the Action group."
+            }
+        },
+        "webhookReceiverName": {
+            "type": "String",
+            "defaultValue": "itomlondon1",
+            "metadata": {
+                "description": "Webhook receiver service URI."
+            }
+        },
+        "webhookServiceUri": {
+            "type": "String",
+            "defaultValue": "https://eventuser:eventuser@itomlondon1.service-now.com/api/now/cloud_event",
+            "metadata": {
+                "description": "Webhook receiver service URI."
+            }
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Insights/activityLogAlerts",
+            "name": "[parameters('activityLogAlertName')]",
+            "apiVersion": "2017-04-01",
+            "location": "Global",
+            "properties": {
+                "enabled": "[parameters('activityLogAlertEnabled')]",
+                "scopes": [
+                    "[subscription().id]"
+                ],
+                "condition": {
+                    "allOf": [
+                        {
+                            "field": "category",
+                            "equals": "Administrative"
+                        },
+                        {
+                            "field": "status",
+                            "equals": "Succeeded",
+                            "containsAny": null
+                        },
+                        {
+                            "anyOf": "[parameters('operationNameCondition')]"
+                        }
+                    ]
+                },
+                "actions": {
+                    "actionGroups": [
+                        {
+                            "actionGroupId": "[resourceId('Microsoft.Insights/actionGroups', parameters('actionGroupName'))]"
+                        }
+                    ]
+                }
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Insights/actionGroups/', parameters('actionGroupName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Insights/actionGroups",
+            "name": "[parameters('actionGroupName')]",
+            "apiVersion": "2017-04-01",
+            "location": "Global",
+            "properties": {
+                "groupShortName": "[parameters('actionGroupShortName')]",
+                "enabled": true,
+                "smsReceivers": [],
+                "emailReceivers": [],
+                "webhookReceivers": [
+                    {
+                        "name": "[parameters('webhookReceiverName')]",
+                        "serviceUri": "[parameters('webhookServiceUri')]"
+                    }
+                ]
+            }
+        }
+    ]
+}

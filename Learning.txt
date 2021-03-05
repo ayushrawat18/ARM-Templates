@@ -1,0 +1,4 @@
+https://azurestack.blog/2015/06/azure-resource-manager-templates-json/
+https://docs.microsoft.com/en-gb/azure/azure-resource-manager/resource-group-authoring-templates
+https://github.com/Azure/azure-quickstart-templates
+https://docs.servicenow.com/bundle/istanbul-it-operations-management/page/product/azure-cloud-provisioning/task/t_AssignAttrArmTemplParam.html

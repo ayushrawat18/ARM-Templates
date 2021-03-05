@@ -1,0 +1,97 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "ARMTemplate_MyNetwork007"
+    },
+    "addressPrefix": {
+        "type": "string",
+        "defaultValue": "10.4.0.0/16",
+        "metadata": {
+          "SNC::Parameter::Metadata": {
+            "allowedPattern": "^([0-9]+\\.){3}[0-9]+\\/[0-9]+$",
+            "ConstraintDescription": "Should be a valid CIDR address.Eg. 10.0.0.0/16, 10.4.0.0/16"
+          }
+        }
+    },
+    "subnetName": {
+      "type": "string",
+      "defaultValue": "ARMTemplate_MySubnet007"
+    },
+    "subnetPrefix": {
+        "type": "string",
+        "defaultValue": "10.4.0.0/24",
+        "allowedValues": [ "10.4.0.0/24", "10.4.1.0/24", "12345.4132"],
+        "metadata": {
+          "SNC::Parameter::Metadata": {
+            "allowedPattern": "^([0-9]+\\.){3}[0-9]+\\/[0-9]+$",
+            "ConstraintDescription": "Should be a valid CIDR address.Eg. 10.4.0.0/24, 10.4.1.0/24"
+          }
+        }
+    }
+
+  },
+  "variables": { },
+  "resources": [
+    {
+      "apiVersion": "2016-09-01",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[parameters('virtualNetworkName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('subnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2016-09-01",
+      "name": "nestedTemplate",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "resources": [
+            {
+              "apiVersion": "2016-09-01",
+              "type": "Microsoft.Network/publicIPAddresses",
+              "name": "ARMTemplate_MyPublicIP007",
+              "location": "[resourceGroup().location]",
+              "properties": {
+                "publicIPAllocationMethod": "Dynamic"
+              }
+            }
+          ],
+          "outputs": {
+            "publicIPId": {
+              "type": "string",
+              "value" : "[resourceId('Microsoft.Network/publicIPAddresses','ARMTemplate_MyPublicIP007')]"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "outputs": { 
+    "messageFromLinkedTemplate": {
+      "type": "string",
+      "value": "[reference('nestedTemplate').outputs.publicIPId.value]"
+    }
+  }
+}
+
+//https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-linked-templates
